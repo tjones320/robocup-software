@@ -73,61 +73,6 @@ void MotionControl::run() {
                                     "Planning");
     }
 
-    // Angle control //////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////
-
-    float targetW = 0;
-    auto& rotationCommand = _robot->rotationCommand();
-    const auto& rotationConstraints = _robot->rotationConstraints();
-
-    boost::optional<Geometry2d::Point> targetPt;
-    const auto& motionCommand = _robot->motionCommand();
-
-    boost::optional<float> targetAngleFinal;
-    // if (motionCommand->getCommandType() == MotionCommand::Pivot) {
-    //    PivotCommand command =
-    //    *static_cast<PivotCommand*>(motionCommand.get());
-    //    targetPt = command.pivotTarget;
-    //} else {
-    if (optTarget) {
-        if (optTarget->angle) {
-            if (optTarget->angle->angle) {
-                targetAngleFinal = *optTarget->angle->angle;
-            }
-        }
-    }
-    //}
-
-    if (targetPt) {
-        // fixing the angle ensures that we don't go the long way around to get
-        // to our final angle
-        targetAngleFinal = (*targetPt - _robot->pos).angle();
-    }
-
-    if (!targetAngleFinal) {
-        _targetAngleVel(0);
-    } else {
-        float angleError = fixAngleRadians(*targetAngleFinal - _robot->angle);
-
-        targetW = _angleController.run(angleError);
-
-        // limit W
-        if (abs(targetW) > (rotationConstraints.maxSpeed)) {
-            if (targetW > 0) {
-                targetW = (rotationConstraints.maxSpeed);
-            } else {
-                targetW = -(rotationConstraints.maxSpeed);
-            }
-        }
-
-        /*
-        _robot->addText(QString("targetW: %1").arg(targetW));
-        _robot->addText(QString("angleError: %1").arg(angleError));
-        _robot->addText(QString("targetGlobalAngle: %1").arg(targetAngleFinal));
-        _robot->addText(QString("angle: %1").arg(_robot->angle));
-        */
-        _targetAngleVel(targetW);
-    }
 
     // handle body velocity for pivot command
     /*
@@ -181,6 +126,58 @@ void MotionControl::run() {
     target.vel = target.vel.rotated(M_PI_2 - _robot->angle);
 
     this->_targetBodyVel(target.vel);
+
+    // Angle control //////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////
+
+    float targetW = 0;
+    auto& rotationCommand = _robot->rotationCommand();
+    const auto& rotationConstraints = _robot->rotationConstraints();
+
+    boost::optional<Geometry2d::Point> targetPt;
+    const auto& motionCommand = _robot->motionCommand();
+
+    boost::optional<float> targetAngleFinal;
+    // if (motionCommand->getCommandType() == MotionCommand::Pivot) {
+    //    PivotCommand command =
+    //    *static_cast<PivotCommand*>(motionCommand.get());
+    //    targetPt = command.pivotTarget;
+    //} else {
+    if (optTarget) {
+        if (optTarget->angle) {
+            if (optTarget->angle->angle) {
+                targetAngleFinal = *optTarget->angle->angle;
+            }
+        }
+    }
+    //}
+
+    if (targetPt) {
+        // fixing the angle ensures that we don't go the long way around to get
+        // to our final angle
+        targetAngleFinal = (*targetPt - _robot->pos).angle();
+    }
+
+    if (!targetAngleFinal) {
+        _targetAngleVel(0);
+    } else {
+        float angleError = fixAngleRadians(*targetAngleFinal - _robot->angle);
+
+        targetW = _angleController.run(angleError);
+
+        // limit W
+        float maxAllowedRotation = rotationConstraints.maxSpeed - 0.9 * target.vel.mag();
+        if (maxAllowedRotation < 0) maxAllowedRotation = 0;
+        if (abs(targetW) > maxAllowedRotation) {
+            if (targetW > 0) {
+                targetW = maxAllowedRotation;
+            } else {
+                targetW = -maxAllowedRotation;
+            }
+        }
+
+        _targetAngleVel(targetW);
+    }
 }
 
 void MotionControl::stopped() {
