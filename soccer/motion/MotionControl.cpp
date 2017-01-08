@@ -202,6 +202,7 @@ void MotionControl::_targetAngleVel(float angleVel) {
     _robot->control->set_avelocity(angleVel);
 }
 
+#include <iostream>
 void MotionControl::_targetBodyVel(Point targetVel) {
     // Limit Velocity
     targetVel.clamp(*_max_velocity);
@@ -209,7 +210,11 @@ void MotionControl::_targetBodyVel(Point targetVel) {
     // Limit Acceleration
     auto dt = RJ::Seconds(RJ::now() - _lastCmdTime);
     Point targetAccel = (targetVel - _lastVelCmd) / dt.count();
+
+    //std::cout << "dt count: " << dt.count();
+    std::cout << "unclamped: " << targetAccel << std::endl;
     targetAccel.clamp(*_max_acceleration);
+    std::cout << "clamped: " << targetAccel << std::endl;
 
     targetVel = _lastVelCmd + targetAccel * dt.count();
 
@@ -218,6 +223,7 @@ void MotionControl::_targetBodyVel(Point targetVel) {
         targetVel = Point(0, 0);
         debugThrow("A bad value was calculated.");
     }
+
 
     // track these values so we can limit acceleration
     _lastVelCmd = targetVel;
