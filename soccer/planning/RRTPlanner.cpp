@@ -158,6 +158,36 @@ std::unique_ptr<InterpolatedPath> RRTPlanner::generateRRTPath(
             break;
         }
 
+        const int STEP = 1;
+        const int MAX_STEP = 100;
+
+        // first plan an absolutely normal path
+        auto path = generateCubicBezier(points, obstacles, motionConstraints, start.vel, goal.vel);
+
+        int vel_step_amount = MAX_STEP;
+        MotionConstraints spoofed_constraints;
+        const float MAX_SPEED = motionConstraints.maxSpeed;
+
+        RJ::Seconds hitTime;
+        Point hitLocation;
+        //std::cout << "entering loop!" << std::endl;
+        while (path->pathsIntersect(dyObs, path->startTime(), &hitLocation, &hitTime)) {
+            std::cout << "in loop: " << vel_step_amount << std::endl;
+            vel_step_amount -= STEP;
+            if (vel_step_amount == 10) {
+                lastPath = std::move(path); // why are we doing this?
+                return lastPath;;
+            }
+            // spoof a smaller velocity step and try to get another path
+            spoofed_constraints.maxSpeed = MAX_SPEED * ((float) vel_step_amount) / MAX_STEP;
+            path = generateCubicBezier(points, obstacles, spoofed_constraints, start.vel, goal.vel);
+        }
+        //std::cout << "found working path" << std::endl;
+        return std::move(path);
+        
+        /*
+        MotionConstraints constraints;
+        *constraints._max_speed = 10.0f;
         // Generate and return a cubic bezier path using the waypoints
         auto path = generateCubicBezier(points, obstacles, motionConstraints,
                                         start.vel, goal.vel);
@@ -172,6 +202,7 @@ std::unique_ptr<InterpolatedPath> RRTPlanner::generateRRTPath(
         } else {
             return std::move(path);
         }
+        */
     }
     // debugLog("Generate Failed 10 times");
     return lastPath;
