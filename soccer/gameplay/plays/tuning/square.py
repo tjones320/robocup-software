@@ -10,13 +10,13 @@ import skills
 ## Robots repeatedly line up on opposite sides of the field
 class Square(play.Play):
 
-    Pause = 2.0
+    Pause = .1
 
-    min_x = -constants.Field.Width / 6
-    max_x = constants.Field.Width / 6
+    min_x = 1 * -constants.Field.Width / 6
+    max_x = 1 * constants.Field.Width / 6
 
-    min_y = constants.Field.Length / 6
-    max_y = 2 * constants.Field.Length / 6
+    min_y = 2 * constants.Field.Length / 12
+    max_y = 4 * constants.Field.Length / 12
 
     class State(enum.Enum):
         up_right = 0
@@ -120,4 +120,8 @@ class Square(play.Play):
     def execute_running(self):
         for bhvr in self.all_subbehaviors():
             if (bhvr.robot != None):
-                bhvr.robot.face(robocup.Point(0, 0))
+                pt = bhvr.robot.pos
+                pt.y += 1
+                bhvr.robot.face(pt)
+                #bhvr.robot.angle = 0
+
