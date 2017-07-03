@@ -36,58 +36,48 @@ class Square(play.Play):
         for state in Square.State:
             self.add_state(state, behavior.Behavior.State.running)
 
-        self.add_transition(behavior.Behavior.State.start,
-                            Square.State.orient, lambda: True,
-                            'immediately')
+        self.add_transition(behavior.Behavior.State.start, Square.State.orient,
+                            lambda: True, 'immediately')
 
         self.add_transition(
-            Square.State.orient,
-            Square.State.up_right,
+            Square.State.orient, Square.State.up_right,
             lambda: self.all_subbehaviors_completed() and time.time() - self.side_start > 1,
             'oriented')
 
         self.add_transition(
-            Square.State.up_left,
-            Square.State.pause,
+            Square.State.up_left, Square.State.pause,
             lambda: self.all_subbehaviors_completed() and time.time() - self.side_start > 1,
             'made it to up')
 
         self.add_transition(
-            Square.State.up_right,
-            Square.State.pause,
+            Square.State.up_right, Square.State.pause,
             lambda: self.all_subbehaviors_completed() and time.time() - self.side_start > 1,
             'made it to left')
 
         self.add_transition(
-            Square.State.bottom_left,
-            Square.State.pause,
+            Square.State.bottom_left, Square.State.pause,
             lambda: self.all_subbehaviors_completed() and time.time() - self.side_start > 1,
             'made it to down')
 
         self.add_transition(
-            Square.State.bottom_right,
-            Square.State.pause,
+            Square.State.bottom_right, Square.State.pause,
             lambda: self.all_subbehaviors_completed() and time.time() - self.side_start > 1,
             'made it to right')
 
         self.add_transition(
-            Square.State.pause,
-            Square.State.up_left,
+            Square.State.pause, Square.State.up_left,
             lambda: (time.time() - self.pause_start_time) > Square.Pause and self.prev_side == Square.State.bottom_left,
             'pause over')
         self.add_transition(
-            Square.State.pause,
-            Square.State.up_right,
+            Square.State.pause, Square.State.up_right,
             lambda: (time.time() - self.pause_start_time) > Square.Pause and self.prev_side == Square.State.up_left,
             'pause over')
         self.add_transition(
-            Square.State.pause,
-            Square.State.bottom_right,
+            Square.State.pause, Square.State.bottom_right,
             lambda: (time.time() - self.pause_start_time) > Square.Pause and self.prev_side == Square.State.up_right,
             'pause over')
         self.add_transition(
-            Square.State.pause,
-            Square.State.bottom_left,
+            Square.State.pause, Square.State.bottom_left,
             lambda: (time.time() - self.pause_start_time) > Square.Pause and self.prev_side == Square.State.bottom_right,
             'pause over')
 
@@ -99,14 +89,17 @@ class Square(play.Play):
 
     def on_enter_orient(self):
         self.side_start = time.time()
-        self.add_subbehavior(skills.face.Face(robocup.Point(self.min_x, self.max_y), math.pi * 1.5), "Robot")
+        self.add_subbehavior(
+            skills.face.Face(
+                robocup.Point(self.min_x, self.max_y), math.pi * 1.5), "Robot")
 
     def on_exit_orient(self):
         self.remove_all_subbehaviors()
 
     def on_enter_up_left(self):
         self.side_start = time.time()
-        self.add_subbehavior(skills.move.Move(robocup.Point(self.min_x, self.max_y)), "Robot")
+        self.add_subbehavior(
+            skills.move.Move(robocup.Point(self.min_x, self.max_y)), "Robot")
 
     def on_exit_up_left(self):
         self.remove_all_subbehaviors()
@@ -114,7 +107,8 @@ class Square(play.Play):
 
     def on_enter_up_right(self):
         self.side_start = time.time()
-        self.add_subbehavior(skills.move.Move(robocup.Point(self.max_x, self.max_y)), "Robot")
+        self.add_subbehavior(
+            skills.move.Move(robocup.Point(self.max_x, self.max_y)), "Robot")
 
     def on_exit_up_right(self):
         self.remove_all_subbehaviors()
@@ -122,7 +116,8 @@ class Square(play.Play):
 
     def on_enter_bottom_left(self):
         self.side_start = time.time()
-        self.add_subbehavior(skills.move.Move(robocup.Point(self.min_x, self.min_y)), "Robot")
+        self.add_subbehavior(
+            skills.move.Move(robocup.Point(self.min_x, self.min_y)), "Robot")
 
     def on_exit_bottom_left(self):
         self.remove_all_subbehaviors()
@@ -130,7 +125,8 @@ class Square(play.Play):
 
     def on_enter_bottom_right(self):
         self.side_start = time.time()
-        self.add_subbehavior(skills.move.Move(robocup.Point(self.max_x, self.min_y)), "Robot")
+        self.add_subbehavior(
+            skills.move.Move(robocup.Point(self.max_x, self.min_y)), "Robot")
 
     def on_exit_bottom_right(self):
         self.remove_all_subbehaviors()
