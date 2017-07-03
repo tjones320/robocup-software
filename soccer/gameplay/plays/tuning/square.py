@@ -1,6 +1,7 @@
 import behavior
 import constants
 import enum
+import math
 import play
 import robocup
 import role_assignment
@@ -25,6 +26,7 @@ class Square(play.Play):
         bottom_left = 2
         bottom_right = 3
         pause = 4
+        orient = 5
 
     def __init__(self):
         super().__init__(continuous=True)
@@ -35,8 +37,14 @@ class Square(play.Play):
             self.add_state(state, behavior.Behavior.State.running)
 
         self.add_transition(behavior.Behavior.State.start,
-                            Square.State.up_right, lambda: True,
+                            Square.State.orient, lambda: True,
                             'immediately')
+
+        self.add_transition(
+            Square.State.orient,
+            Square.State.up_right,
+            lambda: self.all_subbehaviors_completed() and time.time() - self.side_start > 1,
+            'oriented')
 
         self.add_transition(
             Square.State.up_left,
@@ -89,6 +97,13 @@ class Square(play.Play):
             req.required_shell_id = 1
         return reqs
 
+    def on_enter_orient(self):
+        self.side_start = time.time()
+        self.add_subbehavior(skills.face.Face(robocup.Point(self.min_x, self.max_y), math.pi * 1.5), "Robot")
+
+    def on_exit_orient(self):
+        self.remove_all_subbehaviors()
+
     def on_enter_up_left(self):
         self.side_start = time.time()
         self.add_subbehavior(skills.move.Move(robocup.Point(self.min_x, self.max_y)), "Robot")
@@ -123,8 +138,3 @@ class Square(play.Play):
 
     def on_enter_pause(self):
         self.pause_start_time = time.time()
-
-    def execute_running(self):
-        for bhvr in self.all_subbehaviors():
-            if (bhvr.robot != None):
-                bhvr.robot.face(robocup.Point(0, 0))
