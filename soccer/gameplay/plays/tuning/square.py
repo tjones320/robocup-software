@@ -1,10 +1,11 @@
-import play
 import behavior
-import robocup
 import constants
 import enum
-import time
+import play
+import robocup
+import role_assignment
 import skills
+import time
 
 
 ## Robots repeatedly line up on opposite sides of the field
@@ -81,6 +82,12 @@ class Square(play.Play):
             Square.State.bottom_left,
             lambda: (time.time() - self.pause_start_time) > Square.Pause and self.prev_side == Square.State.bottom_right,
             'pause over')
+
+    def role_requirements(self):
+        reqs = super().role_requirements()
+        for req in role_assignment.iterate_role_requirements_tree_leaves(reqs):
+            req.required_shell_id = 1
+        return reqs
 
     def on_enter_up_left(self):
         self.side_start = time.time()
